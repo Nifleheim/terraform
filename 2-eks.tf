@@ -1,5 +1,5 @@
 resource "aws_iam_role" "eks" {
-    name = "${var.env}-${var.eks_name}-eks-cluster"
+    name = "cilsy-final-eks-cluster"
     
     assume_role_policy = <<POLICY
 {
@@ -23,7 +23,7 @@ resource "aws_iam_role_policy_attachment" "eks" {
 }
 
 resource "aws_eks_cluster" "this" {
-    name        = "${var.env}-${var.eks_name}" 
+    name        = "cilsy-final" 
     version     = var.eks_version
     role_arn    = aws_iam_role.eks.arn 
 
@@ -31,7 +31,13 @@ resource "aws_eks_cluster" "this" {
       endpoint_private_access   = false
       endpoint_public_access    = true
 
-      subnet_ids                = var.subnet_ids
+      subnet_ids                = [
+        aws_subnet.private_ap_southeast_2a.id,
+        aws_subnet.private_ap_southeast_2b.id,
+        aws_subnet.public_ap_southeast_2a.id,
+        aws_subnet.public_ap_southeast_2b.id
+      ]
+      
     }   
   depends_on = [aws_iam_role_policy_attachment.eks]
  } 
@@ -65,7 +71,12 @@ resource "aws_eks_node_group" "this" {
     node_group_name = each.key
     node_role_arn   = aws_iam_role.nodes.arn
 
-    subnet_ids      = var.subnet_ids
+    subnet_ids      = [
+      aws_subnet.private_ap_southeast_2a.id,
+      aws_subnet.private_ap_southeast_2b.id,
+      aws_subnet.public_ap_southeast_2a.id,
+      aws_subnet.public_ap_southeast_2b.id
+    ]
 
     capacity_type   = each.value.capacity_type
     instance_types  = each.value.instance_types
@@ -101,10 +112,3 @@ resource "aws_iam_openid_connect_provider" "this" {
     url             = aws_eks_cluster.this.identity[0].oidc[0].issuer   
 }
 
-output "eks_name" {
-  value = aws_eks_cluster.this.name
-}
-
-output "openid_provider_arn" {
-  value = aws_iam_openid_connect_provider.this[0].arn
-}

@@ -1,5 +1,5 @@
 data "aws_iam_openid_connect_provider" "this" {
-  arn = var.openid_provider_arn
+  arn = aws_iam_openid_connect_provider.this[0].arn
 }
 
 data "aws_iam_policy_document" "cluster_autoscaler" {
@@ -66,32 +66,6 @@ resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
   policy_arn  = aws_iam_policy.cluster_autoscaler[0].arn
 }
 
-resource "helm_release" "cluster_autoscaler" {
-  count       = var.enable_cluster_autoscaler ? 1 : 0
-
-  name        = "autoscaler"
-
-  repository  = "https://kubernetes.github.io/autoscaler"
-  chart       = "cluster-autoscaler"
-  namespace   = "kube-system"
-  version     = var.cluster_autoscaler_helm_version
-
-  set {
-    name      = "rbac.serviceAccount.name"
-    value     = "cluster-autoscaler"
-  }
-
-  set {
-    name      = "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value     = aws_iam_role.cluster_autoscaler[0].arn
-  }
-
-  set {
-    name      = "autoDiscovery.clusterName"
-    value     = var.eks_name
-  }
-}
-
 data "aws_iam_policy_document" "csi" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -121,7 +95,7 @@ resource "aws_iam_role_policy_attachment" "amazon_ebs_csi_driver" {
 }
 
 resource "aws_eks_addon" "csi_driver" {
-  cluster_name             = "${var.eks_name}"
+  cluster_name             = "cilsy-final"
   addon_name               = "aws-ebs-csi-driver"
   addon_version            = "v1.18.0-eksbuild.1"
   service_account_role_arn = aws_iam_role.eks_ebs_csi_driver.arn
