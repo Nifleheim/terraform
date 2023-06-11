@@ -39,7 +39,7 @@ resource "aws_subnet" "private_ap_southeast_2a" {
   availability_zone = "ap-southeast-2a"
 
   tags = {
-    "Name"                              = "private-us-east-2a"
+    "Name"                              = "private-ap-southeast-2a"
     "kubernetes.io/role/internal-elb"   = "1"
     "kubernetes.io/cluster/cilsy-final" = "owned"
   }
